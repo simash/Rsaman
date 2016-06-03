@@ -1,0 +1,60 @@
+public byte[] getCSVFileStream(List<BBHConfirm> bBHConfirms) {
+		int maxlength = 0;
+
+		if (bBHConfirms == null) {
+			return new byte[0];
+		}
+
+		StringBuilder sb = new StringBuilder();
+
+		for (BBHConfirm bBHConfirm : bBHConfirms) {
+			for (String methodSignature : BBH_CONFIRM_MAPPING.values()) {
+				sb.append(extractFieldValue(bBHConfirm, methodSignature, "-") + ETFConstant.COMMA);
+			}
+
+			List<SettlementLocation> settlementLocations = bBHConfirm.getListOfSettlementLocation();
+			int settlementLocationsSize = settlementLocations.size();
+
+			if (settlementLocationsSize > maxlength) {
+				maxlength = settlementLocationsSize;
+			}
+
+			for (int x = 1; x <= settlementLocationsSize; x++) {
+				for (String fieldName : BBH_SETTLEMENT_MAPPING.keySet()) {
+					String methodName = BBH_SETTLEMENT_MAPPING.get(fieldName);
+					SettlementLocation location = settlementLocations.get(x - 1);
+					String value = extractFieldValue(location, methodName, "-");
+					if (!("-".equals(value))) {
+						sb.append(value + ETFConstant.COMMA);
+					}
+				}
+			}
+			sb.replace(sb.length() - 1, sb.length(), StringUtils.EMPTY);
+			sb.append(ETFConstant.NEW_LINE);
+		}
+		sb.replace(sb.length() - 1, sb.length(), StringUtils.EMPTY);
+
+		String header = getHeader (maxlength);
+		sb.insert(0, header);
+		
+		return sb.toString().getBytes();
+	}
+
+	private String getHeader(int maxlength) {
+		StringBuilder sb = new StringBuilder();
+		
+		for (String fieldName : BBH_CONFIRM_MAPPING.keySet()) {
+			sb.append(fieldName + ETFConstant.COMMA);
+		}
+
+		for (int x = 1; x <= maxlength; x++) {
+			for (String fieldName : BBH_SETTLEMENT_MAPPING.keySet()) {
+				fieldName = fieldName.replace("{position}", String.valueOf(x));
+				sb.append(fieldName + ETFConstant.COMMA);
+			}
+		}
+		sb.replace(sb.length() - 1, sb.length(), StringUtils.EMPTY);
+		sb.append(ETFConstant.NEW_LINE);
+
+		return sb.toString();
+	}
