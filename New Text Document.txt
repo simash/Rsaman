@@ -1,0 +1,48 @@
+public byte[] getCSVFileStream(List<BBHConfirm> bBHConfirms) {
+		if (bBHConfirms == null) {
+			return new byte[0];
+		}
+
+		StringBuilder sb = new StringBuilder();
+
+		for (String fieldName : BBH_CONFIRM_MAPPING.keySet()) {
+			sb.append(fieldName + ETFConstant.COMMA);
+		}
+		for (String fieldName : BBH_SETTLEMENT_MAPPING.keySet()) {
+			sb.append(fieldName + ETFConstant.COMMA);
+		}
+		sb.replace(sb.length() - 1, sb.length(), StringUtils.EMPTY);
+		sb.append(ETFConstant.NEW_LINE);
+
+		for (BBHConfirm bBHConfirm : bBHConfirms) {
+			for (String methodSignature : BBH_CONFIRM_MAPPING.values()) {
+				sb.append(extractFieldValue(bBHConfirm, methodSignature, "-") + ETFConstant.COMMA);
+			}
+			
+			SettlementLocation settlementLocation = bBHConfirm.getSettlementLocation();
+			for (String methodName : BBH_SETTLEMENT_MAPPING.values()) {
+				sb.append(extractFieldValue(settlementLocation, methodName, "-") + ETFConstant.COMMA);
+			}
+
+			sb.replace(sb.length() - 1, sb.length(), StringUtils.EMPTY);
+			sb.append(ETFConstant.NEW_LINE);
+		}
+
+		return sb.toString().getBytes();
+	}
+
+	public String extractFieldValue(final Object data, final String methodName, final String valueForEmptyCell) {
+		String value = StringUtils.EMPTY;
+		try {
+			Method method = data.getClass().getDeclaredMethod(methodName);
+			value = String.valueOf(method.invoke(data));
+		} catch (Exception e) {
+
+			value = StringUtils.EMPTY;
+		}
+		if (StringUtils.isEmpty(value)) {
+			value = valueForEmptyCell;
+		}
+		return value;
+	}
+}
